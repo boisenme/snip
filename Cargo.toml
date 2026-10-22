@@ -1,0 +1,25 @@
+[package]
+name = "snip"
+version = "1.0.0"
+edition = "2024"
+rust-version = "1.88"
+description = "Region screenshot with quick annotations and tesseract OCR for KDE Plasma 6 on Wayland"
+license = "MIT"
+readme = "README.md"
+keywords = ["screenshot", "ocr", "wayland", "kde", "annotation"]
+categories = ["command-line-utilities", "multimedia::images"]
+repository = "https://github.com/boisenme/snip"
+
+[dependencies]
+ab_glyph = "0.2"
+image = { version = "0.25", default-features = false, features = ["png"] }
+libc = "0.2"
+smithay-client-toolkit = "0.21"
+tiny-skia = { version = "0.12", default-features = false, features = ["std", "simd"] }
+wl-clipboard-rs = "0.9"
+zbus = { version = "5", default-features = false, features = ["blocking-api", "async-io"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

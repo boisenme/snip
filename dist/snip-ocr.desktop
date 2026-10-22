@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Snip Text (OCR)
+Comment=Select a region and copy its text to the clipboard
+Exec=snip ocr
+Icon=edit-select-text
+Terminal=false
+NoDisplay=true
+Categories=Utility;

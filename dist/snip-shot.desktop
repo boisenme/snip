@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Snip Screenshot
+Comment=Select a region, optionally annotate (1 markers, 2 arrow, 3 draw), copy to clipboard
+Exec=snip shot
+Icon=accessories-screenshot
+Terminal=false
+NoDisplay=true
+Categories=Utility;

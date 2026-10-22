@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>snip demo: OCR</title>
+<link rel="stylesheet" href="desktop.css">
+<style>
+  .viewer { flex: 1; background: #1d2023; display: flex; flex-direction: column; }
+  .viewer .tools { height: 34px; background: #2a2e32; border-bottom: 1px solid #1b1e20; display: flex; align-items: center; gap: 14px; padding: 0 12px; color: #bdc3c7; font-size: 12px; }
+  .viewer .tools b { width: 16px; height: 16px; border: 2px solid #9aa1a6; border-radius: 3px; display: block; }
+  .viewer .tools .zoom { margin-left: auto; }
+  .viewer .canvas { flex: 1; display: grid; place-items: center; }
+  /* the "image": a slide grabbed from a video call, i.e. text you can't select */
+  .slide { width: 520px; height: 300px; border-radius: 2px; padding: 30px 36px; color: #f2f4f8;
+           background: radial-gradient(120% 120% at 100% 0%, #3a3f8f 0%, #222653 45%, #171a38 100%);
+           box-shadow: 0 6px 24px rgba(0,0,0,.5); position: relative; overflow: hidden; }
+  .slide::after { content: ""; position: absolute; right: -60px; bottom: -80px; width: 260px; height: 260px; border-radius: 50%;
+                  background: radial-gradient(circle, rgba(62, 196, 200, .35), transparent 70%); }
+  .slide .kick { font: 700 11px "Noto Sans"; letter-spacing: .14em; color: #8fd6e0; text-transform: uppercase; }
+  .slide h2 { font: 700 26px "Noto Sans"; margin: 6px 0 18px; }
+  .slide ul { list-style: none; display: grid; gap: 9px; font-size: 16.5px; }
+  .slide li::before { content: ""; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #8fd6e0; margin: 0 12px 2px 0; }
+  .slide .foot { position: absolute; left: 36px; bottom: 18px; font-size: 11px; color: #9aa0c8; }
+
+  .editor { flex: 1; display: flex; background: #fcfcfc; }
+  .editor .gutter { width: 34px; background: #f1f3f5; border-right: 1px solid #e3e6ea; color: #a0a7ae; font: 400 12.5px/1.6 "Noto Sans Mono"; text-align: right; padding: 8px 8px 0 0; }
+  .editor .text { flex: 1; padding: 8px 10px; font: 400 12.5px/1.6 "Noto Sans Mono"; color: #232629; white-space: pre; position: relative; }
+  .editor .caret { display: inline-block; width: 1.5px; height: 15px; background: #232629; vertical-align: -3px; }
+
+  .notif { position: absolute; right: 14px; bottom: 62px; width: 344px; border-radius: 9px; padding: 10px 12px 12px; z-index: 60;
+           background: rgba(42, 46, 50, .98); color: #eff0f1; box-shadow: 0 10px 30px rgba(0,0,0,.45); border: 1px solid rgba(255,255,255,.07); opacity: 0; }
+  .notif .hdr { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: #bdc3c7; }
+  .notif .hdr .x { margin-left: auto; opacity: .7; }
+  .notif .body { display: flex; gap: 12px; margin-top: 8px; }
+  .notif .big { width: 40px; height: 40px; flex: none; display: grid; place-items: center; }
+  .notif .sum { font-weight: 700; font-size: 13.5px; }
+  .notif .txt { font-size: 12.5px; color: #d6d9dc; margin-top: 2px; line-height: 1.45; white-space: pre-line; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="desktop">
+    <div class="win" id="viewerwin" style="left:40px; top:52px; width:600px; height:446px;">
+      <div class="titlebar"><i class="ico" style="background:linear-gradient(135deg,#f6c453,#e8833a)"></i>call-recording-frame.png · Image Viewer
+        <div class="btns"><span><svg viewBox="0 0 10 10"><path d="M2 5h6"/></svg></span><span><svg viewBox="0 0 10 10"><path d="M2 7l3-3 3 3"/></svg></span><span class="close"><svg viewBox="0 0 10 10"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5"/></svg></span></div>
+      </div>
+      <div class="viewer">
+        <div class="tools"><b></b><b></b><b></b><span class="zoom">100%</span></div>
+        <div class="canvas">
+          <div class="slide" id="slide">
+            <div class="kick">Team sync · week 42</div>
+            <h2>Before you tag a release</h2>
+            <ul id="bullets">
+              <li>Bump the version in Cargo.toml</li>
+              <li>Run the full test suite on CI</li>
+              <li>Update the changelog and docs</li>
+              <li>Tag, push, and draft the notes</li>
+            </ul>
+            <div class="foot">slide 4 / 12</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="win inactive" id="editorwin" style="left:664px; top:118px; width:420px; height:320px;">
+      <div class="titlebar"><i class="ico" style="background:linear-gradient(135deg,#8e6cf0,#5b43c9)"></i>notes.md · Text Editor
+        <div class="btns"><span><svg viewBox="0 0 10 10"><path d="M2 5h6"/></svg></span><span><svg viewBox="0 0 10 10"><path d="M2 7l3-3 3 3"/></svg></span><span class="close"><svg viewBox="0 0 10 10"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5"/></svg></span></div>
+      </div>
+      <div class="editor">
+        <div class="gutter" id="gutter">1<br>2<br>3</div>
+        <div class="text"><span>## Release notes</span>
+<span></span>
+<span id="paste"></span><span class="caret" id="caret"></span></div>
+      </div>
+    </div>
+
+    <div class="notif" id="notif">
+      <div class="hdr"><svg width="14" height="14" viewBox="0 0 14 14"><rect x="1.5" y="3.5" width="7" height="9" rx="1" fill="none" stroke="#bdc3c7" stroke-width="1.3"/><path d="M4.5 3.5V2.2c0-.4.3-.7.7-.7h6.1c.4 0 .7.3.7.7v7.6c0 .4-.3.7-.7.7H8.5" fill="none" stroke="#bdc3c7" stroke-width="1.3"/></svg>snip <span>· now</span><span class="x">✕</span></div>
+      <div class="body">
+        <div class="big"><svg width="34" height="34" viewBox="0 0 34 34"><rect x="5" y="9" width="17" height="21" rx="2.5" fill="#3daee9"/><rect x="12" y="4" width="17" height="21" rx="2.5" fill="#eff0f1" stroke="#2a2e32" stroke-width="1.5"/><path d="M16 11h9M16 15h9M16 19h6" stroke="#7f8c8d" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+        <div><div class="sum">Text copied</div><div class="txt" id="ntxt"></div></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="app"><svg width="22" height="22" viewBox="0 0 22 22" fill="#e7e9ec"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="13" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg></div>
+      <div class="app active" id="tb-viewer"><i style="background:linear-gradient(135deg,#f6c453,#e8833a)"></i></div>
+      <div class="app"><i style="background:#31363b; border:1.5px solid #6c7177"></i></div>
+      <div class="app"><i style="background:linear-gradient(135deg,#2bb3a3,#3d7bfd)"></i></div>
+      <div class="app" id="tb-editor"><i style="background:linear-gradient(135deg,#8e6cf0,#5b43c9)"></i></div>
+      <div class="sep"></div>
+      <div class="tray"><b class="round"></b><b></b><b class="round"></b></div>
+      <div class="clock">14:36<small>16/10/2026</small></div>
+    </div>
+  </div>
+
+  <canvas id="overlay" width="1120" height="630"></canvas>
+
+  <div id="chrome">
+    <div class="keys" id="keys"></div>
+  </div>
+
+  <div id="cursor" data-shape="arrow">
+    <span class="ring"></span>
+    <svg class="arrow" width="20" height="28" viewBox="0 0 20 28"><path d="M1.5 1.5v21.2l5.1-5 3.4 8 3.6-1.5-3.4-7.9h7.2z" fill="#1b1e22" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    <svg class="cross" width="24" height="24" viewBox="0 0 24 24"><path d="M12 1v8M12 15v8M1 12h8M15 12h8" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/><path d="M12 1v8M12 15v8M1 12h8M15 12h8" stroke="#1b1e22" stroke-width="1.4" stroke-linecap="round"/></svg>
+  </div>
+</div>
+
+<script src="snip-ui.js"></script>
+<script>
+// OCR sequence: hotkey -> drag over text in an image -> snip copies the recognised text and
+// shows its notification -> paste into an editor. (The OCR result is scripted here; in snip
+// it comes from tesseract.)
+const $ = (id) => document.getElementById(id);
+const rel = (el) => { const r = el.getBoundingClientRect(), s = $('stage').getBoundingClientRect();
+  return { x: r.left - s.left, y: r.top - s.top, w: r.width, h: r.height }; };
+const TEXT = 'Bump the version in Cargo.toml\nRun the full test suite on CI\nUpdate the changelog and docs\nTag, push, and draft the notes';
+
+let G;
+function measure() {
+  const b = rel($('bullets')), ed = rel($('editorwin'));
+  const windows = [rel($('viewerwin')), ed].map((r) => ({ x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.w), h: Math.round(r.h) }));
+  G = { windows, selA: [b.x - 8, b.y - 7], selB: [b.x + 300, b.y + b.h + 7], home: [520, 560], edit: [ed.x + 250, ed.y + 150] };
+  G.path = [[0, ...G.home], [0.6, 300, 140], [1.25, 300, 140], [1.55, ...G.selA], [T.press, ...G.selA], [T.release, ...G.selB],
+    [T.click - 0.05, ...G.edit], [T.end - 0.3, ...G.home]];
+}
+const T = { keysIn: 0.3, open: 0.75, press: 1.7, release: 2.75, notif: 3.05, click: 4.0, paste: 4.45, notifOut: 6.05, end: 7.4 };
+
+const scene = {
+  duration: T.end,
+  frame(t, ctx) {
+    if (!G) measure();
+    const cur = pathAt(G.path, t);
+    const overlayOn = t >= T.open && t < T.release;
+
+    let shown = null;
+    for (const [t0, keys, label, hold] of [[T.keysIn, ['Meta', 'Shift', 'T'], 'OCR hotkey', 0.95], [T.paste, ['Ctrl', 'V'], 'Paste', 0.7]])
+      if (t >= t0 - 0.05 && t < t0 + hold + 0.2) shown = [keys, label, prog(t, t0 - 0.05, t0 + 0.1, ease.out) * (1 - prog(t, t0 + hold, t0 + hold + 0.2))];
+    if (shown) setKeys($('keys'), shown[0], shown[2], shown[1]); else $('keys').style.opacity = 0;
+
+    // snip's notification (notify-send "Text copied" <preview>), slides in like Plasma's popups
+    const n = prog(t, T.notif, T.notif + 0.25, ease.out) * (1 - prog(t, T.notifOut, T.notifOut + 0.25));
+    $('notif').style.opacity = n;
+    $('notif').style.transform = `translateY(${(1 - n) * 14}px)`;
+    $('ntxt').textContent = TEXT;
+
+    // editor gets focus on click, then the paste
+    const focused = t >= T.click && t < T.end - 0.3;
+    $('editorwin').classList.toggle('inactive', !focused);
+    $('viewerwin').classList.toggle('inactive', focused);
+    $('editorwin').style.zIndex = focused ? 2 : 1;
+    $('tb-editor').classList.toggle('active', focused);
+    $('tb-viewer').classList.toggle('active', !focused);
+    const pasted = t >= T.paste;
+    $('paste').textContent = pasted ? TEXT.split('\n').map((l) => '- ' + l).join('\n') + '\n' : '';
+    $('paste').style.opacity = 1 - prog(t, T.end - 0.6, T.end - 0.3);
+    $('gutter').innerHTML = Array.from({ length: pasted && t < T.end - 0.3 ? 7 : 3 }, (_, i) => i + 1).join('<br>');
+    $('caret').style.visibility = focused && Math.floor((t - T.click) * 2.2) % 2 === 0 ? 'visible' : 'hidden';
+
+    if (!overlayOn) {
+      ctx.clearRect(0, 0, W, H);
+      setCursor($('cursor'), cur, 'arrow', Math.abs(t - T.click) < 0.08);
+      return;
+    }
+    const st = { purpose: 'ocr', phase: 'idle', sel: null, tool: null, anns: [], drawing: null };
+    if (t < T.press) st.sel = snapAt(G.windows, cur);
+    else { st.phase = 'selecting'; st.sel = span(G.selA, cur); }
+    drawOverlay(ctx, st);
+    setCursor($('cursor'), cur, 'cross', t >= T.press);
+  },
+};
+startPlayer(scene);
+</script>
+</body>
+</html>

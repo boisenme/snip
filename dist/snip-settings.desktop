@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Snip Settings
+Comment=Choose the hotkeys for snip screenshots and OCR
+Exec=snip-settings
+Icon=preferences-desktop-keyboard-shortcuts
+Terminal=false
+Categories=Utility;Settings;
+StartupWMClass=io.github.snip.Settings

@@ -1,0 +1,37 @@
+# Builds a prebuilt x86_64 tarball when a v* tag is pushed and attaches it to a GitHub release.
+# Built in Debian 12; the binary needs glibc 2.34+ (Arch, Fedora, Debian 12+, Ubuntu 22.04+).
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: rust:1-bookworm
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install build dependencies
+        run: apt-get update && apt-get install -y --no-install-recommends libxkbcommon-dev pkg-config
+      - name: Build
+        run: cargo build --release --locked
+      - name: Package
+        run: |
+          mkdir -p pkg/snip
+          cp target/release/snip install.sh uninstall.sh LICENSE README.md pkg/snip/
+          cp -r dist pkg/snip/
+          tar -C pkg -czf snip-x86_64-linux.tar.gz snip
+          sha256sum snip-x86_64-linux.tar.gz > snip-x86_64-linux.tar.gz.sha256
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            snip-x86_64-linux.tar.gz
+            snip-x86_64-linux.tar.gz.sha256

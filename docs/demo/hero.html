@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>snip demo: screenshot + annotate</title>
+<link rel="stylesheet" href="desktop.css">
+<style>
+  /* the made-up report app in the front window */
+  .app-body { flex: 1; display: flex; min-height: 0; }
+  .side { width: 132px; background: #f1f3f6; border-right: 1px solid #e3e6ea; padding: 14px 10px; display: flex; flex-direction: column; gap: 4px; }
+  .side .brand { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 13px; margin: 0 4px 12px; color: #1f2733; }
+  .side .brand i { width: 18px; height: 18px; border-radius: 5px; background: linear-gradient(135deg, #2bb3a3, #3d7bfd); }
+  .side a { display: block; padding: 6px 8px; border-radius: 6px; color: #4b5563; font-size: 12.5px; }
+  .side a.on { background: #e2e8f3; color: #1f2733; font-weight: 600; }
+  .main { flex: 1; padding: 16px 18px; display: flex; flex-direction: column; gap: 14px; }
+  .head { display: flex; align-items: center; }
+  .head h1 { font: 700 18px "Noto Sans"; color: #1b2230; }
+  .head .sub { color: #6b7280; font-size: 12px; margin-top: 1px; }
+  .head .btn { margin-left: auto; background: #2f6fec; color: #fff; font-weight: 600; font-size: 12.5px; padding: 7px 14px; border-radius: 7px; }
+  .head .btn.ghost { background: #fff; color: #374151; border: 1px solid #d6dae1; margin-left: 8px; padding: 6px 12px; }
+  .kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .kpi { border: 1px solid #e3e6ea; border-radius: 9px; padding: 10px 12px; background: #fff; }
+  .kpi .l { color: #6b7280; font-size: 11.5px; }
+  .kpi .v { font: 700 20px "Noto Sans"; color: #1b2230; margin-top: 2px; }
+  .kpi .d { font-size: 11.5px; font-weight: 600; color: #15935f; }
+  .kpi .d.neg { color: #c2410c; }
+  .chart { flex: 1; border: 1px solid #e3e6ea; border-radius: 9px; padding: 10px 14px 8px; background: #fff; display: flex; flex-direction: column; }
+  .chart .t { font-weight: 600; font-size: 12.5px; color: #1b2230; display: flex; }
+  .chart .t span { margin-left: auto; color: #6b7280; font-weight: 400; font-size: 11.5px; }
+  .bars { flex: 1; display: flex; align-items: flex-end; gap: 16px; padding: 10px 6px 0; border-bottom: 1px solid #e5e7eb;
+          background: repeating-linear-gradient(to top, transparent 0 39px, #f0f2f5 39px 40px); }
+  .bars i { flex: 1; border-radius: 5px 5px 0 0; background: #b9cdf7; }
+  .bars i.top { background: #2f6fec; position: relative; }
+  .bars i em { position: absolute; left: 50%; top: -19px; transform: translateX(-50%); font: 700 11.5px "Noto Sans"; font-style: normal; color: #2f6fec; }
+  .days { display: flex; gap: 16px; padding: 4px 6px 0; color: #8b93a1; font-size: 11px; }
+  .days span { flex: 1; text-align: center; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="desktop">
+    <div class="win dark inactive" id="term" style="left:52px; top:110px; width:430px; height:300px;">
+      <div class="titlebar"><i class="ico" style="background:#31363b; border:1px solid #5c6166"></i>~/code/notes : bash
+        <div class="btns"><span><svg viewBox="0 0 10 10"><path d="M2 5h6"/></svg></span><span><svg viewBox="0 0 10 10"><path d="M2 7l3-3 3 3"/></svg></span><span class="close"><svg viewBox="0 0 10 10"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5"/></svg></span></div>
+      </div>
+<div class="term"><span class="p">user@host</span> <span class="d">~/code/notes</span> $ git status --short
+<span class="g"> M</span> src/report.rs
+<span class="g"> M</span> README.md
+<span class="p">user@host</span> <span class="d">~/code/notes</span> $ cargo test
+<span class="m">   Compiling notes v0.3.1</span>
+<span class="m">    Finished test profile in 2.41s</span>
+running 12 tests
+test result: <span class="g">ok</span>. 12 passed; 0 failed
+<span class="p">user@host</span> <span class="d">~/code/notes</span> $ █</div>
+    </div>
+
+    <div class="win" id="report" style="left:372px; top:66px; width:664px; height:450px;">
+      <div class="titlebar"><i class="ico" style="background:linear-gradient(135deg,#2bb3a3,#3d7bfd)"></i>Weekly report · Tidewater
+        <div class="btns"><span><svg viewBox="0 0 10 10"><path d="M2 5h6"/></svg></span><span><svg viewBox="0 0 10 10"><path d="M2 7l3-3 3 3"/></svg></span><span class="close"><svg viewBox="0 0 10 10"><path d="M2.5 2.5l5 5M7.5 2.5l-5 5"/></svg></span></div>
+      </div>
+      <div class="app-body">
+        <div class="side">
+          <div class="brand"><i></i>Tidewater</div>
+          <a>Overview</a><a class="on">Reports</a><a>Customers</a><a>Billing</a><a>Settings</a>
+        </div>
+        <div class="main" id="main">
+          <div class="head">
+            <div><h1>Weekly report</h1><div class="sub">Oct 6 – Oct 12</div></div>
+            <span class="btn" id="export">Export</span><span class="btn ghost">Share</span>
+          </div>
+          <div class="kpis">
+            <div class="kpi" id="kpi1"><div class="l">Visitors</div><div class="v">48.2k</div><div class="d">▲ 12.4%</div></div>
+            <div class="kpi" id="kpi2"><div class="l">Sign-ups</div><div class="v">1,904</div><div class="d">▲ 8.1%</div></div>
+            <div class="kpi"><div class="l">Churn</div><div class="v">2.1%</div><div class="d neg">▲ 0.3 pt</div></div>
+          </div>
+          <div class="chart">
+            <div class="t">Daily active users <span>this week</span></div>
+            <div class="bars"><i style="height:46%"></i><i style="height:58%"></i><i style="height:52%"></i><i class="top" id="peak" style="height:84%"><em>12.8k</em></i><i style="height:61%"></i><i style="height:34%"></i><i style="height:29%"></i></div>
+            <div class="days"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="app"><svg width="22" height="22" viewBox="0 0 22 22" fill="#e7e9ec"><rect x="2" y="2" width="7" height="7" rx="1.5"/><rect x="13" y="2" width="7" height="7" rx="1.5"/><rect x="2" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg></div>
+      <div class="app"><i style="background:linear-gradient(135deg,#f6c453,#e8833a)"></i></div>
+      <div class="app"><i style="background:#31363b; border:1.5px solid #6c7177"></i></div>
+      <div class="app active"><i style="background:linear-gradient(135deg,#2bb3a3,#3d7bfd)"></i></div>
+      <div class="app"><i style="background:linear-gradient(135deg,#8e6cf0,#5b43c9)"></i></div>
+      <div class="sep"></div>
+      <div class="tray"><b class="round"></b><b></b><b class="round"></b></div>
+      <div class="clock">14:32<small>16/10/2026</small></div>
+    </div>
+  </div>
+
+  <canvas id="overlay" width="1120" height="630"></canvas>
+
+  <div id="chrome">
+    <div class="keys" id="keys"></div>
+    <div class="caption" id="caption"><span class="ok"><svg viewBox="0 0 12 12"><path d="M2.5 6.3l2.3 2.3 4.7-5"/></svg></span>Copied to clipboard <small id="capsize"></small></div>
+  </div>
+
+  <div id="cursor" data-shape="arrow">
+    <span class="ring"></span>
+    <svg class="arrow" width="20" height="28" viewBox="0 0 20 28"><path d="M1.5 1.5v21.2l5.1-5 3.4 8 3.6-1.5-3.4-7.9h7.2z" fill="#1b1e22" stroke="#fff" stroke-width="1.6" stroke-linejoin="round"/></svg>
+    <svg class="cross" width="24" height="24" viewBox="0 0 24 24"><path d="M12 1v8M12 15v8M1 12h8M15 12h8" stroke="#fff" stroke-width="3.2" stroke-linecap="round"/><path d="M12 1v8M12 15v8M1 12h8M15 12h8" stroke="#1b1e22" stroke-width="1.4" stroke-linecap="round"/></svg>
+  </div>
+</div>
+
+<script src="snip-ui.js"></script>
+<script>
+// Hero sequence: hotkey -> hover to snap windows -> press 1 -> drag a region -> markers ->
+// 2 arrow -> 3 draw -> Enter copies. Pure function of t, so render.mjs can step it frame by frame.
+const $ = (id) => document.getElementById(id);
+const rel = (el) => { const r = el.getBoundingClientRect(), s = $('stage').getBoundingClientRect();
+  return { x: r.left - s.left, y: r.top - s.top, w: r.width, h: r.height }; };
+
+let G; // geometry measured from the DOM once
+function measure() {
+  const main = rel($('main')), exp = rel($('export')), k1 = rel($('kpi1')), k2 = rel($('kpi2')), peak = rel($('peak'));
+  const windows = [rel($('report')), rel($('term'))].map((r) => ({ x: Math.round(r.x), y: Math.round(r.y), w: Math.round(r.w), h: Math.round(r.h) }));
+  const selA = [main.x + 4, main.y + 2], selB = [main.x + main.w - 4, main.y + main.h - 4];
+  const m1 = [k1.x + k1.w - 18, k1.y + 18], m2 = [k2.x + k2.w - 18, k2.y + 18];
+  const arrB = [exp.x - 4, exp.y + exp.h * 0.62], arrA = [arrB[0] - 128, arrB[1] + 20];
+  const pc = [peak.x + peak.w / 2, peak.y + 2], prx = peak.w / 2 + 20, pry = 30;
+  const pen = [];
+  for (let i = 0; i <= 90; i++) { // a hand-drawn loop around the peak bar
+    const k = i / 90, a = -Math.PI * 0.62 + k * Math.PI * 2.14;
+    const wob = 1 + 0.035 * Math.sin(k * 9.3) + 0.02 * Math.sin(k * 21.1 + 1) + 0.09 * k;
+    pen.push([pc[0] + Math.cos(a) * prx * wob, pc[1] + Math.sin(a) * pry * wob]);
+  }
+  const home = [600, 470];
+  G = { windows, selA, selB, m1, m2, arrA, arrB, pen, home };
+}
+
+const T = { keysIn: 0.3, open: 0.75, key1: 2.15, press: 2.45, release: 3.35, m1: 3.85, m2: 4.3,
+  key2: 4.6, arrS: 4.95, arrE: 5.45, key3: 5.75, penS: 6.1, penE: 7.0, enter: 7.45, end: 9.8 };
+
+function cursorPath() {
+  const [hx, hy] = G.home, w = G.windows;
+  const onReport = [w[0].x + 380, w[0].y + 40], onTerm = [w[1].x + 160, w[1].y + 170], onDesk = [150, 46];
+  return [
+    [0, hx, hy], [0.55, onReport[0], onReport[1]],
+    [1.0, onReport[0], onReport[1]], [1.35, onTerm[0], onTerm[1]],
+    [1.6, onTerm[0], onTerm[1]], [1.9, onDesk[0], onDesk[1]],
+    [2.05, onDesk[0], onDesk[1]], [2.4, ...G.selA],
+    [T.press, ...G.selA], [T.release, ...G.selB],
+    [T.m1 - 0.05, ...G.m1], [T.m2 - 0.05, ...G.m2],
+    [T.arrS - 0.05, ...G.arrA], [T.arrS, ...G.arrA], [T.arrE, ...G.arrB],
+    [T.penS - 0.05, ...G.pen[0]],
+    ...G.pen.map((p, i) => [T.penS + (T.penE - T.penS) * (i / (G.pen.length - 1)), p[0], p[1], ease.linear]),
+    [T.enter + 0.6, G.pen.at(-1)[0], G.pen.at(-1)[1]], [T.end - 0.25, hx, hy],
+  ];
+}
+
+const scene = {
+  duration: T.end,
+  frame(t, ctx) {
+    if (!G) { measure(); G.path = cursorPath(); }
+    const cur = pathAt(G.path, t);
+    const overlayOn = t >= T.open && t < T.enter;
+
+    // keycaps (demo chrome): hotkey, then 1 / 2 / 3 / Enter
+    const keyEvents = [[T.keysIn, ['Meta', 'Shift', 'X'], 'Screenshot hotkey', 0.95], [T.key1, ['1'], 'Markers', 0.6],
+      [T.key2, ['2'], 'Arrow', 0.6], [T.key3, ['3'], 'Draw', 0.6], [T.enter, ['Enter'], 'Copy', 0.5]];
+    let shown = null;
+    for (const [t0, keys, label, hold] of keyEvents) {
+      if (t >= t0 - 0.05 && t < t0 + hold + 0.2) shown = [keys, label, prog(t, t0 - 0.05, t0 + 0.1, ease.out) * (1 - prog(t, t0 + hold, t0 + hold + 0.2))];
+    }
+    if (shown) setKeys($('keys'), shown[0], shown[2], shown[1]); else $('keys').style.opacity = 0;
+
+    // caption after copying
+    const cap = prog(t, T.enter + 0.25, T.enter + 0.45, ease.out) * (1 - prog(t, T.end - 0.75, T.end - 0.45));
+    $('caption').style.opacity = cap;
+    $('caption').style.transform = `translate(-50%, ${(1 - cap) * -10}px)`;
+    const fin = { w: Math.ceil(G.selB[0]) - Math.floor(G.selA[0]), h: Math.ceil(G.selB[1]) - Math.floor(G.selA[1]) };
+    $('capsize').textContent = `· PNG, ${fin.w} × ${fin.h}`;
+
+    if (!overlayOn) {
+      ctx.clearRect(0, 0, W, H);
+      setCursor($('cursor'), cur, 'arrow', false);
+      return;
+    }
+
+    // snip's state at time t
+    const st = { purpose: 'shot', phase: 'idle', sel: null, tool: null, anns: [], drawing: null };
+    if (t >= T.key1) st.tool = 'marker';
+    if (t >= T.key2) st.tool = 'arrow';
+    if (t >= T.key3) st.tool = 'pen';
+    if (t < T.press) st.sel = snapAt(G.windows, cur);
+    else if (t < T.release) { st.phase = 'selecting'; st.sel = span(G.selA, cur); }
+    else { st.phase = 'annotating'; st.sel = span(G.selA, G.selB); }
+    if (t >= T.m1) st.anns.push({ kind: 'marker', p: G.m1, n: 1 });
+    if (t >= T.m2) st.anns.push({ kind: 'marker', p: G.m2, n: 2 });
+    if (t >= T.arrE) st.anns.push({ kind: 'arrow', a: G.arrA, b: G.arrB });
+    else if (t >= T.arrS) st.drawing = { kind: 'arrow', a: G.arrA, b: cur };
+    const n = Math.round(clamp01((t - T.penS) / (T.penE - T.penS)) * (G.pen.length - 1)) + 1;
+    if (t >= T.penE) st.anns.push({ kind: 'pen', pts: G.pen });
+    else if (t >= T.penS) st.drawing = { kind: 'pen', pts: G.pen.slice(0, n) };
+    drawOverlay(ctx, st);
+
+    const down = (t >= T.press && t < T.release) || (t >= T.arrS && t < T.arrE) || (t >= T.penS && t < T.penE) ||
+      Math.abs(t - T.m1) < 0.08 || Math.abs(t - T.m2) < 0.08;
+    setCursor($('cursor'), cur, 'cross', down);
+  },
+};
+startPlayer(scene);
+</script>
+</body>
+</html>

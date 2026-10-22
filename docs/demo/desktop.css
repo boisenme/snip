@@ -1,0 +1,97 @@
+/* A neutral, made-up Plasma-like desktop for the snip demo. No real content. */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: #0d0f14; }
+body { display: grid; place-items: center; min-height: 100vh; font: 400 13px "Noto Sans", sans-serif; }
+
+#stage { position: relative; width: 1120px; height: 630px; overflow: hidden; color: #232629; }
+#desktop, #overlay, #chrome { position: absolute; inset: 0; width: 1120px; height: 630px; }
+#desktop { z-index: 0; }
+#overlay { pointer-events: none; z-index: 10; }
+
+/* ---------------------------------------------------------- wallpaper */
+#desktop {
+  background:
+    radial-gradient(60% 80% at 82% 18%, rgba(124, 92, 255, .55), transparent 70%),
+    radial-gradient(55% 70% at 12% 90%, rgba(0, 170, 190, .45), transparent 70%),
+    radial-gradient(40% 50% at 50% 55%, rgba(60, 120, 255, .25), transparent 75%),
+    linear-gradient(160deg, #1b2240 0%, #141a30 45%, #0f1424 100%);
+}
+#desktop::after { /* soft wave */
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(120% 60% at 30% 120%, rgba(255,255,255,.06), transparent 60%),
+              radial-gradient(90% 40% at 90% -10%, rgba(255,255,255,.05), transparent 60%);
+}
+
+/* ---------------------------------------------------------- floating panel */
+.panel {
+  position: absolute; left: 50%; bottom: 8px; transform: translateX(-50%);
+  height: 44px; width: 1104px; border-radius: 10px; z-index: 50;
+  background: rgba(32, 35, 41, .92); border: 1px solid rgba(255,255,255,.07);
+  display: flex; align-items: center; padding: 0 8px; gap: 6px; color: #e7e9ec;
+}
+.panel .app { width: 34px; height: 34px; border-radius: 7px; display: grid; place-items: center; position: relative; }
+.panel .app.active { background: rgba(255,255,255,.08); }
+.panel .app.active::after { content: ""; position: absolute; bottom: 1px; left: 11px; right: 11px; height: 3px; border-radius: 2px; background: #3daee9; }
+.panel .app i { width: 22px; height: 22px; border-radius: 6px; display: block; }
+.panel .sep { flex: 1; }
+.panel .tray { display: flex; gap: 12px; align-items: center; padding-right: 6px; opacity: .85; }
+.panel .tray b { width: 14px; height: 14px; border-radius: 3px; border: 2px solid #dfe2e6; display: block; }
+.panel .tray b.round { border-radius: 50%; }
+.panel .clock { text-align: center; line-height: 1.15; font-size: 12px; padding: 0 6px; }
+.panel .clock small { display: block; font-size: 10px; opacity: .7; }
+
+/* ---------------------------------------------------------- windows (Breeze-ish) */
+.win {
+  position: absolute; border-radius: 8px 8px 4px 4px; overflow: hidden;
+  box-shadow: 0 18px 50px rgba(0,0,0,.45), 0 0 0 1px rgba(0,0,0,.25);
+  display: flex; flex-direction: column; background: #fcfcfc;
+}
+.titlebar {
+  height: 32px; flex: none; display: flex; align-items: center; justify-content: center; position: relative;
+  background: #dee0e2; color: #232629; font-size: 13px; border-bottom: 1px solid rgba(0,0,0,.08);
+}
+.titlebar .ico { position: absolute; left: 10px; width: 16px; height: 16px; border-radius: 4px; }
+.titlebar .btns { position: absolute; right: 8px; display: flex; gap: 6px; }
+.titlebar .btns span { width: 18px; height: 18px; border-radius: 50%; display: grid; place-items: center; }
+.titlebar .btns svg { width: 10px; height: 10px; stroke: currentColor; stroke-width: 1.6; fill: none; }
+.titlebar .btns .close { background: #da4453; color: #fff; }
+.win.dark { background: #232629; }
+.win.dark .titlebar { background: #2a2e32; color: #eff0f1; border-bottom-color: rgba(255,255,255,.06); }
+.win.inactive .titlebar { color: #7f8c8d; }
+.win.inactive .titlebar .btns .close { background: transparent; color: #7f8c8d; }
+
+/* terminal */
+.term { flex: 1; padding: 10px 12px; font: 400 12.5px/1.55 "Noto Sans Mono", monospace; color: #d0d4d8; white-space: pre; }
+.term .p { color: #27ae60; } .term .d { color: #3daee9; } .term .g { color: #1cdc9a; } .term .m { color: #7f8c8d; }
+
+/* ---------------------------------------------------------- demo chrome (keycaps, captions) */
+#chrome { pointer-events: none; z-index: 100; }
+.keys {
+  position: absolute; right: 14px; top: 12px; display: flex; align-items: center; gap: 6px;
+  padding: 7px 10px; border-radius: 12px; background: rgba(250, 251, 253, .96);
+  box-shadow: 0 8px 28px rgba(0,0,0,.35); opacity: 0; white-space: nowrap;
+}
+.keys .klabel { font: 600 12px "Noto Sans"; color: #5b6270; margin: 0 6px 0 2px; }
+.keys kbd {
+  font: 700 13px "Noto Sans"; color: #1d2230; min-width: 30px; text-align: center;
+  padding: 4px 9px 5px; border-radius: 7px; background: linear-gradient(#fff, #eef1f6);
+  border: 1px solid #cfd5df; box-shadow: 0 2px 0 #c3cad6;
+}
+.keys .kplus { color: #8a93a3; font: 700 12px "Noto Sans"; }
+.caption {
+  position: absolute; left: 50%; top: 18px; display: flex; align-items: center; gap: 10px;
+  padding: 9px 16px 9px 12px; border-radius: 12px; background: rgba(250, 251, 253, .97);
+  box-shadow: 0 8px 28px rgba(0,0,0,.35); font: 600 14px "Noto Sans"; color: #1d2230; opacity: 0; white-space: nowrap;
+}
+.caption .ok { width: 22px; height: 22px; border-radius: 50%; background: #469bff; display: grid; place-items: center; }
+.caption .ok svg { width: 12px; height: 12px; stroke: #fff; stroke-width: 2.6; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.caption small { font-weight: 400; color: #5b6270; font-size: 13px; }
+
+/* ---------------------------------------------------------- cursor */
+#cursor { position: absolute; left: 0; top: 0; z-index: 200; pointer-events: none; }
+#cursor svg { position: absolute; display: none; filter: drop-shadow(0 1px 1.5px rgba(0,0,0,.45)); }
+#cursor[data-shape="arrow"] .arrow { display: block; left: -1px; top: -1px; }
+#cursor[data-shape="cross"] .cross { display: block; left: -12px; top: -12px; }
+#cursor .ring { position: absolute; left: -14px; top: -14px; width: 28px; height: 28px; border-radius: 50%;
+  border: 2px solid rgba(255,255,255,.9); opacity: 0; transform: scale(.4); transition: none; }
+#cursor.down .ring { opacity: .9; transform: scale(1); }
